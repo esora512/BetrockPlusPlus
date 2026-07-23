@@ -21,6 +21,7 @@ void CommandManager::Init(Server* _server) {
 	m_registeredCommands.push_back(std::make_unique<CommandSeed>());
 	m_registeredCommands.push_back(std::make_unique<CommandSpawn>());
 	m_registeredCommands.push_back(std::make_unique<CommandGive>());
+	m_registeredCommands.push_back(std::make_unique<CommandPlane>());
 	m_registeredCommands.push_back(std::make_unique<CommandList>());
 	m_registeredCommands.push_back(std::make_unique<CommandLoaded>());
 	m_registeredCommands.push_back(std::make_unique<CommandDimension>());

@@ -88,6 +88,8 @@ DEFINE_COMMAND(CommandDimension, "dim", "Swap to the other dimension", "", false
 DEFINE_COMMAND(CommandVersion, "version", "Shows the current Server version", "", false, false);
 DEFINE_COMMAND(CommandSummon, "summon", "Summons a smart entity", "", false, false);
 DEFINE_COMMAND(CommandStats, "stats", "Shows usage statistics", "", false, false);
+DEFINE_COMMAND(CommandPlane, "plane", "Fills a horizontal area with a block", "<block> <x1> <z1> <x2> <z2> <y>", true, false);
+
 /*
 DEFINE_COMMAND(CommandPose, "pose", "Set the current players' pose", "<crouch/fire/sit>", false, false);
 DEFINE_COMMAND(CommandInterface, "interface", "Open the desired interface", "<id>", false, false);
