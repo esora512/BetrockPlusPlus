@@ -473,8 +473,6 @@ struct NBTParser {
 
 	inline std::string ReadString() {
 		uint16_t len = uint16_t(ReadI16());
-		if (pos + len > length)
-			throw std::runtime_error(std::format("NBT: string out of bounds ({}+{}/{})", pos,len,length));
 		std::string s(reinterpret_cast<const char*>(data) + pos, len);
 		pos += len;
 		return s;
