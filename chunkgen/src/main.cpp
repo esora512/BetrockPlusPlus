@@ -14,6 +14,7 @@
 // world.cpp). Output should therefore be bit-identical to what the real
 // server would generate for the same seed/coordinates.
 
+#include "blocks/block_properties_behaviors.h"
 #include "nbt_chunk_writer.h"
 #include "world/generator/generator.h"
 #include "world/generator/nether/chunk_gen.h"
@@ -157,6 +158,20 @@ int main(int argc, char** argv) {
 	}
 	const Args& args = *parsed;
 	const bool isHell = (args.dimension == -1);
+
+	// Populates the global block-properties table (light opacity, material,
+	// solidity, ...) that world generation, height-map computation, and
+	// tree/feature placement validity checks all read from. The real game
+	// runtime always does this once at startup (see `Runtime`'s constructor in
+	// src/bpp_shared/runtime.h); chunkgen has no equivalent startup path of its
+	// own, so it must call this explicitly before touching any Chunk. Skipping
+	// it silently leaves every block at its all-zero/default properties (e.g.
+	// lightOpacity defaults to 255 -- fully opaque -- for every block
+	// including air), which corrupts the height map and, transitively, every
+	// generation step that depends on it (trees refuse to place, since their
+	// placement height comes from the height map; flower/mushroom validity
+	// checks misbehave too).
+	Blocks::RegisterAll();
 
 	WorldManager world(isHell);
 	world.InitWorldSeed(args.seed);

@@ -6,6 +6,54 @@ so its output is bit-identical to what the BetrockPlusPlus server itself would
 generate. This file records the non-obvious engineering decisions made along
 the way and why.
 
+## 0. Fixed bug: missing `Blocks::RegisterAll()` corrupted every generated chunk
+
+**This was the root cause of an early, badly wrong build of this tool**: no
+trees, wildly over-placed mushrooms (dozens to ~90 mushroom blocks in a
+single chunk instead of the usual handful), scrambled-looking terrain.
+
+The real game runtime always calls `Blocks::RegisterAll()` once at startup
+(see `Runtime`'s constructor in `src/bpp_shared/runtime.h`) before touching
+any `Chunk`. That call populates the global `Blocks::blockProperties[]`
+table -- light opacity, material (solid/liquid/air), hardness, etc. -- for
+every block type. `chunkgen` never went through `Runtime` (it builds a
+`WorldManager` directly), so it never called this, and every block silently
+kept its all-default `BlockProperties` (notably `lightOpacity = 255`, i.e.
+*fully opaque*, for every block **including air**).
+
+That one missing call corrupted generation in multiple places at once,
+because so much of world gen depends on `blockProperties[]`:
+- `Chunk::GenerateHeightMapColumn()` walks down from the top of the chunk
+  looking for the first block with `lightOpacity > 0`. With air itself
+  reporting opacity 255, it always "found" one at y=127, so **every column's
+  height map was a flat 128** regardless of actual terrain.
+- Tree placement (`TreeGenerator::GenerateTree` / `GenerateTaiga` /
+  `GenerateAltTaiga` / `BigTree`) plants at `y = world.GetHeightValue(x, z)`
+  and immediately rejects placement once `y + treeHeight + 1 > CHUNK_HEIGHT`.
+  With height map stuck at 128, that check failed unconditionally -- **zero
+  trees were ever placed**, in any biome, regardless of seed.
+- Mushroom/flower placement (`FeatureGenerator::GenerateFlowers`) and other
+  `IsSolid`/`IsOpaque`-gated checks throughout population read from the same
+  corrupted table, which made their validity checks pass far more often than
+  they should -- observed as **dozens of mushroom blocks per chunk** instead
+  of the small 1-8 block patches Beta 1.7.3 actually produces.
+
+The fix is one line in `chunkgen`'s `main.cpp`: call `Blocks::RegisterAll()`
+before constructing any `WorldManager`/`Chunk`. Verified after the fix (seed
+999, x/z 0..15, Overworld): height maps now vary realistically (~64-90
+instead of a flat 128), trees appear at normal forest density (~1500+ log
+blocks across 256 chunks vs. 0 before), and mushrooms appear rarely and in
+small patches (6/256 chunks, 1-5 blocks each) instead of constantly and in
+bulk. A full dungeon (2 loot chests + mob spawner) generated afterward looks
+correct too. See `test/run_tests.sh` for the repeatable regression check.
+
+**Lesson for anyone extending this tool**: if you add a new standalone entry
+point that constructs `WorldManager`/`Chunk` objects directly (bypassing
+`Runtime`), you must call `Blocks::RegisterAll()` (and, if item behavior ever
+matters for what you're doing, `Items::RegisterAll()` -- not currently called
+here, see #3) yourself first. There's no compile-time or runtime error if you
+forget; everything just silently uses wrong defaults.
+
 ## 1. Location & source reuse strategy
 
 `chunkgen/` is a sibling CMake project inside this repository, not a copy of
