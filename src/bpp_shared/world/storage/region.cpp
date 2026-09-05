@@ -142,8 +142,8 @@ std::shared_ptr<Chunk> Region::GetChunk(Int32_2 _cpos) {
 	return DecodeNbtData(compressed);
 }
 
-std::vector<uint8_t> Region::EncodeNbtData(const std::shared_ptr<Chunk>& _chunk, int64_t _timestamp,
-                                           std::shared_ptr<const std::vector<Tag>> _entities) {
+Tag BuildChunkLevelTag(const std::shared_ptr<Chunk>& _chunk, int64_t _timestamp,
+                       std::shared_ptr<const std::vector<Tag>> _entities) {
 	// Build a compound tag representing a chunk level entry
 	Tag root;
 	root.type = TAG_COMPOUND;
@@ -252,6 +252,13 @@ std::vector<uint8_t> Region::EncodeNbtData(const std::shared_ptr<Chunk>& _chunk,
 	level.compound["TileEntities"] = tileEntities;
 
 	root.compound["Level"] = level;
+
+	return root;
+}
+
+std::vector<uint8_t> Region::EncodeNbtData(const std::shared_ptr<Chunk>& _chunk, int64_t _timestamp,
+                                           std::shared_ptr<const std::vector<Tag>> _entities) {
+	Tag root = BuildChunkLevelTag(_chunk, _timestamp, _entities);
 
 	// Serialize to bytes
 	std::vector<uint8_t> raw;

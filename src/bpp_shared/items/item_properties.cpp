@@ -6,13 +6,16 @@
 */
 
 #include "item_properties.h"
-#include "../entities/entity_mobile.h"
 #include "base_types.h"
 #include "enums/items.h"
 #include "item_map.h"
-#include "server.h"
 #include "tool_properties.h"
 #include <cstdint>
+
+// EatFood() lives in item_properties_interactions.cpp: it needs a complete
+// PlayerSession, which pulls in the server/networking stack. Keeping it out of
+// this file lets tools that only need item data tables (max stack size, max
+// durability, ...) link against item_properties.cpp without that dependency.
 
 namespace Items {
 
@@ -72,25 +75,6 @@ ItemAmount GetMaxStack(const ItemId _id) {
 	// ItemReed (sugarcane & repeater item), ItemRecord (never reached above),
 	// all blocks, and any resource item not listed above.
 	return Items::STACK_MAX;
-}
-
-void EatFood(PlayerSession& _session, ItemStack* _stack, Entity& _target) {
-	// If it's not a mobile entity, we can't heal it, since it doesn't have health
-	auto* mobile = dynamic_cast<MobileEntity*>(&_target);
-	if (!mobile || !_stack || !IsFood(_stack->id))
-		return;
-	mobile->Heal(GetRegenerationAmount(_stack->id));
-	// Give the bowl back
-	// This looks stupid, and it probably is,
-	// but it avoids the bowl appearing in the slot after a now-empty slot
-	bool giveBowlBack = false;
-	if (_stack->id == Items::Id::MUSHROOM_STEW)
-		giveBowlBack = true;
-	_stack->DecrementCount(1);
-	if (giveBowlBack) {
-		ItemStack itemStack = ItemStack{ Items::Id::BOWL, 0, 1 };
-		_session.inventory.PickupItem(itemStack);
-	}
 }
 
 ItemDamage GetMaxDurability(const ItemId _id) {

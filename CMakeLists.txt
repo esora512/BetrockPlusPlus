@@ -142,6 +142,7 @@ set(SHARED_SOURCES
     src/bpp_shared/blocks/block_properties.cpp
     src/bpp_shared/items/item_map.cpp
     src/bpp_shared/items/item_properties.cpp
+    src/bpp_shared/items/item_properties_interactions.cpp
     src/bpp_shared/items/tool_properties.cpp
     src/bpp_shared/items/tool_item_properties.cpp
     src/bpp_shared/inventory/inventory_interaction.cpp

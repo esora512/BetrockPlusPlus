@@ -38,6 +38,13 @@ struct ChunkHeaderEntry {
 	uint8_t format;
 };
 
+// Builds the "Level" compound tag (xPos, zPos, Blocks, Data, lighting, HeightMap,
+// Entities, TileEntities, etc) describing a chunk, exactly as written to region files.
+// Free function (no Region instance needed) so it can be reused by other tools
+// (e.g. the standalone chunkgen CLI) without duplicating the encoding logic.
+Tag BuildChunkLevelTag(const std::shared_ptr<Chunk>& _chunk, int64_t _timestamp,
+                       std::shared_ptr<const std::vector<Tag>> _entities);
+
 class Region {
 public:
 	Int32_2 rpos;
